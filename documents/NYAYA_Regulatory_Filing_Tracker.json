@@ -1,0 +1,49 @@
+{
+  "document_id": "NYA-RFT-010",
+  "version": 1.0,
+  "effective_date": "2026-10-10",
+  "filings": [
+    {
+      "filing_id": "FIL-2026-101",
+      "jurisdiction": "Dakshin Pradesh",
+      "description": "Annual network resilience attestation",
+      "due_date": "2026-10-05",
+      "status": "Overdue"
+    },
+    {
+      "filing_id": "FIL-2026-102",
+      "jurisdiction": "Navapura",
+      "description": "Consumer complaint metrics return",
+      "due_date": "2026-10-25",
+      "status": "Due"
+    },
+    {
+      "filing_id": "FIL-2026-103",
+      "jurisdiction": "Paschim Territory",
+      "description": "Spectrum usage declaration",
+      "due_date": "2026-11-05",
+      "status": "Planned"
+    },
+    {
+      "filing_id": "FIL-2026-104",
+      "jurisdiction": "Uttara Region",
+      "description": "Emergency communications certification",
+      "due_date": "2026-09-30",
+      "status": "Submitted"
+    },
+    {
+      "filing_id": "FIL-2026-105",
+      "jurisdiction": "Dakshin Pradesh",
+      "description": "Quarterly privacy controls statement",
+      "due_date": "2026-10-15",
+      "status": "Due"
+    },
+    {
+      "filing_id": "FIL-2026-106",
+      "jurisdiction": "Navapura",
+      "description": "Lawful request transparency schedule",
+      "due_date": "2026-12-15",
+      "status": "Planned"
+    }
+  ]
+}

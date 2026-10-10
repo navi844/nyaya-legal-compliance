@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_env: str = Field(default='development', alias='APP_ENV')
-    chroma_base_dir: str = Field(default='./chroma_stores', alias='CHROMA_BASE_DIR')
+    chroma_base_dir: str = Field(default='./chroma_db', alias='CHROMA_BASE_DIR')
     chunking_strategy: str = Field(default='heading_aware', alias='CHUNKING_STRATEGY')
     embedding_model: str = Field(default='all-MiniLM-L6-v2', alias='EMBEDDING_MODEL')
     llm_mode: str = Field(default='mock', alias='LLM_MODE')

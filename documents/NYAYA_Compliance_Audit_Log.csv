@@ -1,0 +1,9 @@
+audit_id,date,area_audited,finding,severity,status
+AUD-2026-001,2026-01-12,Access provisioning,User access recertification completed on time,Low,Closed
+AUD-2026-002,2026-02-14,Privileged access,privileged-access review evidence incomplete,High,Open
+AUD-2026-003,2026-03-04,Third-party onboarding,Vendor risk questionnaire reviewed and approved,Medium,Closed
+AUD-2026-004,2026-03-29,Vendor due diligence,vendor due-diligence renewal overdue,Medium,Open
+AUD-2026-005,2026-04-18,Data retention,Retention schedule updated after remediation,Low,Closed
+AUD-2026-006,2026-05-12,Retention exception,retention exception lacks documented approval,High,Open
+AUD-2026-007,2026-06-08,Incident response,Incident drill report accepted by operating committee,Medium,Closed
+AUD-2026-008,2026-07-19,Business continuity,incident exercise action owner not assigned,Low,Open
