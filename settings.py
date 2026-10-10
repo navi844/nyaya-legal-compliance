@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     openai_api_key: str | None = Field(default=None, alias='OPENAI_API_KEY')
     openai_model: str = Field(default='gpt-4o-mini', alias='OPENAI_MODEL')
     openai_embedding_model: str = Field(default='text-embedding-3-small', alias='OPENAI_EMBEDDING_MODEL')
-    llm_mode: str = Field(default='mock', alias='LLM_MODE')
+    llm_mode: str = Field(default='openai_compatible', alias='LLM_MODE')
     llm_base_url: str | None = Field(default=None, alias='LLM_BASE_URL')
     llm_api_key: str | None = Field(default=None, alias='LLM_API_KEY')
     llm_model: str | None = Field(default=None, alias='LLM_MODEL')
