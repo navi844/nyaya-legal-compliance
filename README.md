@@ -1,78 +1,93 @@
 # Nyaya Legal & Compliance RAG Project
 
-Nyaya is a local-first, deterministic retrieval-augmented generation (RAG) project for fictional legal and compliance document analysis. It loads sample documents, redacts personally identifiable information, chunks and embeds the text, stores it in a local vector database, and answers user questions using a mock or OpenAI-compatible LLM.
+Nyaya is a local-first, deterministic retrieval-augmented generation (RAG) project for fictional legal and compliance review workflows. It ingests sample legal and compliance documents, redacts personally identifiable information (PII), chunks the content, embeds it, stores embeddings in a local Chroma database, and answers grounded questions using a mock LLM or an OpenAI-compatible backend.
 
-The project is implemented across the main modules in `app.py`, `agent.py`, `settings.py`, `loaders.py`, `chunking.py`, `embeddings.py`, `vectorstore.py`, `retrieval.py`, `context.py`, `llm_client.py`, and `pii.py`.
+The project is designed for offline experimentation and demo-friendly testing. All sample content is fictional and safe for training or demonstration purposes.
 
-## Project purpose
+## Project goals
 
-This project is designed to:
+- Ingest legal and compliance files in PDF, DOCX, HTML, CSV, and JSON formats
+- Remove PII before indexing and retrieval
+- Build retrieval-friendly chunks using different chunking strategies
+- Embed and store chunks locally in ChromaDB
+- Retrieve the most relevant context for a question
+- Enforce guardrails for out-of-scope or unsupported requests
+- Expose the system through a FastAPI API
+- Provide a test suite that covers ingestion, chunking, retrieval, PII redaction, and guardrail behavior
 
-- ingest legal/compliance documents in PDF, DOCX, HTML, CSV, and JSON formats
-- redact email and phone data before indexing or answering questions
-- build semantic chunks for retrieval
-- index chunks in ChromaDB locally
-- answer grounded questions using a small retrieval context
-- enforce guardrails for unsupported or out-of-scope requests
-- run as a FastAPI service with a health endpoint and a question-answer endpoint
+## High-level architecture
 
-## What the application does
+The application is structured as a simple, local-first RAG pipeline:
 
-The main execution flow is:
+1. Documents are loaded from the `documents/` directory via `loaders.py`
+2. Content is cleaned and PII-redacted via `pii.py`
+3. Text is split into chunks using strategies in `chunking.py`
+4. Chunks are embedded using `embeddings.py`
+5. Embeddings are persisted to the local Chroma database using `vectorstore.py`
+6. A question is processed by `agent.py`
+7. Relevant chunks are retrieved from the Chroma index
+8. A limited context is assembled and passed to the LLM client
+9. A final answer is returned with source metadata and guardrail status
+10. The FastAPI service exposes the workflow through `app.py`
 
-1. Load documents from a `documents/` folder.
-2. Redact sensitive text using `pii.py`.
-3. Chunk documents with the strategy selected in `settings.py`.
-4. Encode chunks with sentence embeddings.
-5. Persist chunks into a local Chroma vectorstore.
-6. Retrieve the most relevant chunks for a question.
-7. Build context and pass it to the LLM client.
-8. Return the answer, source filenames, and metadata through the FastAPI API.
+## Main project files
 
-## Project structure
-
-- `app.py` – FastAPI application and HTTP endpoints
-- `agent.py` – orchestration logic for indexing and answering questions
-- `settings.py` – environment-driven configuration and validation
-- `loaders.py` – document ingestion for multiple file types
-- `chunking.py` – chunking strategies and document segmentation
-- `embeddings.py` – text embedding generation
-- `vectorstore.py` – Chroma vector database setup and persistence
+- `app.py` – FastAPI endpoints for health and question answering
+- `agent.py` – orchestration for indexing, retrieval, guardrails, and predefined test scenarios
+- `settings.py` – environment-based configuration and validation
+- `loaders.py` – document ingestion for PDF, DOCX, HTML, CSV, and JSON files
+- `chunking.py` – chunking logic for heading-aware and fixed-size segmentation
+- `embeddings.py` – sentence embedding generation
+- `vectorstore.py` – ChromaDB client and persistent collection setup
 - `retrieval.py` – deduplication and context-size filtering
-- `context.py` – prompt/context construction and guardrails
-- `llm_client.py` – LLM interaction layer
-- `pii.py` – PII redaction rules
-- `build_vectorstore.py` – creates the local vector index
-- `scripts/generate_sample_documents.py` – creates fictional legal/compliance sample docs
-- `tests/` – unit tests for ingestion, redaction, retrieval, guardrails, and API behavior
+- `context.py` – context assembly and unsupported-question guardrail logic
+- `llm_client.py` – mock or OpenAI-compatible LLM integration
+- `pii.py` – email and phone redaction logic
+- `build_vectorstore.py` – builds the local vector database
+- `scripts/generate_sample_documents.py` – generates fictional sample documents
+- `tests/` – coverage for ingestion, PII, retrieval, guardrails, and API behavior
+
+## File and data flow
+
+The project uses a deterministic and local-first pipeline:
+
+- Sample documents are created in `documents/`
+- `loaders.py` reads each file and returns structured document metadata
+- `pii.py` redacts PII before documents are stored or indexed
+- `chunking.py` creates chunks based on either heading-aware segmentation or fixed-size chunk splitting
+- `embeddings.py` maps chunk text to embeddings
+- `vectorstore.py` creates or updates the persisted Chroma collection
+- `agent.py` builds answers from the retrieved context and returns metadata
+- `app.py` exposes the same functionality over HTTP
 
 ## Requirements
 
 - Python 3.10+
 - pip
-- An internet connection only for the initial dependency installation, if needed
+- Virtual environment support
+- Internet access only for dependency installation or real OpenAI access
 
 ## Dependency installation
 
-From the project root:
+From the project root, create and activate a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-On Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-On macOS/Linux:
+macOS/Linux:
 
 ```bash
 source .venv/bin/activate
 ```
 
-Then install dependencies:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -80,9 +95,9 @@ pip install -r requirements.txt
 
 ## Environment configuration
 
-The project reads settings from a local `.env` file using `settings.py`.
+The project loads settings from `.env` using `settings.py`.
 
-Create a `.env` file in the root folder with values such as:
+Example `.env`:
 
 ```env
 APP_ENV=development
@@ -90,6 +105,9 @@ CHROMA_BASE_DIR=./chroma_db
 CHUNKING_STRATEGY=heading_aware
 EMBEDDING_MODEL=all-MiniLM-L6-v2
 LLM_MODE=mock
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 MAX_CONTEXT_CHARS=6000
 RETRIEVAL_K=5
 TOPK_MIN_SCORE=0.30
@@ -98,54 +116,145 @@ NEAR_DUPLICATE_THRESHOLD=0.90
 REFERENCE_DATE=2026-10-10
 ```
 
-For a real LLM integration, set:
+Notes:
 
-```env
-LLM_MODE=openai_compatible
-LLM_BASE_URL=https://your-provider.example/v1
-LLM_API_KEY=your_api_key
-LLM_MODEL=your_model_name
-```
+- `LLM_MODE=mock` is the default and does not require external credentials
+- The project supports an OpenAI-compatible backend via `OPENAI_API_KEY`, `OPENAI_MODEL`, and `OPENAI_EMBEDDING_MODEL`
+- Legacy `LLM_*` values are also supported for compatibility
 
-The app validates LLM configuration in `settings.py`. If `LLM_MODE=mock`, no external API key is required.
+## Sample document generation
 
-## Generate sample documents
+The project includes fictional sample documents to keep testing safe and deterministic.
 
-This project ships with a fictional sample dataset. To generate the sample documents in the `documents/` folder:
+Generate sample files:
 
 ```bash
 python scripts/generate_sample_documents.py
 ```
 
-This creates sample PDFs, DOCX, HTML, CSV, and JSON files that are intentionally fictional and not based on real legal or company data.
+This creates document files under `documents/`, including:
 
-## Build the vectorstore
+- `NYAYA_MSA_Excerpt.pdf`
+- `NYAYA_Regulatory_Compliance_Circular.docx`
+- `NYAYA_Legal_FAQ.html`
+- `NYAYA_Compliance_Audit_Log.csv`
+- `NYAYA_Regulatory_Filing_Tracker.json`
 
-Once documents exist, build the local Chroma vector index:
+These documents contain fictional legal/compliance scenarios and are not based on real company or legal data.
+
+## Chunking process
+
+Chunking is implemented in `chunking.py`.
+
+### heading_aware
+
+This is the default strategy.
+
+- Splits text by headings and section markers such as `Section`, numbered headings, HTML headings, and document metadata markers
+- Preserves logical document structure
+- Works well for legal and compliance content where sections matter
+
+### fixed_size
+
+This strategy uses paragraph-based chunking with a fixed character limit and overlap.
+
+- Useful for comparison testing against heading-aware segmentation
+- Helps evaluate how retrieval behaves with different chunk boundaries
+
+Example:
+
+```bash
+python build_vectorstore.py --strategy fixed
+```
+
+The selected strategy is used in `build_vectorstore.py`, which resolves the CLI choice before indexing.
+
+## Retrieval process
+
+Retrieval in this project is based on a semantic vector search over a local ChromaDB collection.
+
+### Semantic retrieval
+
+The main retrieval mechanism is:
+
+- embed the user question
+- query ChromaDB for nearby text chunks
+- fetch the top-k results
+- sort or filter based on score and distance
+- reduce the list to the context budget
+
+Relevant files:
+
+- `agent.py` – `NyayaAgent.fetch_semantic_matches()`
+- `vectorstore.py` – Chroma collection query logic
+- `settings.py` – retrieval parameters
+- `retrieval.py` – deduplication and limit logic
+
+### Retrieval settings
+
+The project uses parameters defined in `settings.py`:
+
+- `RETRIEVAL_K=5`
+- `TOPK_MIN_SCORE=0.30`
+- `THRESHOLD_MIN_SCORE=0.45`
+- `NEAR_DUPLICATE_THRESHOLD=0.90`
+- `MAX_CONTEXT_CHARS=6000`
+
+These values influence:
+
+- how many chunks are returned
+- how strict the filtering is
+- how much text is kept for forming context
+- whether similar chunks are removed before the final answer is generated
+
+## Vector database build
+
+Build the local Chroma index:
 
 ```bash
 python build_vectorstore.py
 ```
 
-This reads all supported documents, chunks them, embeds them, and stores the results in the directory defined by `CHROMA_BASE_DIR`.
-
-## Run the API server
-
-Start the FastAPI app with Uvicorn:
+Or with a selected chunking strategy:
 
 ```bash
-uvicorn app:app --reload
+python build_vectorstore.py --strategy fixed
 ```
 
-Or:
+The script prints a summary that includes:
+
+- database directory
+- collection name
+- chunking strategy
+- number of documents processed
+- number of chunks created
+- embeddings generated
+- collection size
+- elapsed time
+
+The default database directory is `./chroma_db`.
+
+## Running the API
+
+Start the API server:
 
 ```bash
 python -m uvicorn app:app --reload
 ```
 
-The application will run on the default FastAPI/Uvicorn port:
+Or:
+
+```bash
+uvicorn app:app --reload
+```
+
+The app runs on:
 
 - http://127.0.0.1:8000
+
+Swagger docs are available at:
+
+- http://127.0.0.1:8000/docs
 
 ## API usage
 
@@ -155,7 +264,7 @@ The application will run on the default FastAPI/Uvicorn port:
 curl http://127.0.0.1:8000/health
 ```
 
-Example response:
+Expected example response:
 
 ```json
 {
@@ -190,77 +299,115 @@ Example response:
 }
 ```
 
-The `strategy` field accepts the chunking strategy configured in the project, such as `heading_aware` or other supported options defined by `chunking.py`.
+## Agent testing
+
+The project includes predefined testing questions in `agent.py` that demonstrate both grounded retrieval behavior and guardrail behavior.
+
+Run:
+
+```bash
+python agent.py
+```
+
+This prints scenario results for questions such as:
+
+- liability cap in the MSA
+- indemnification obligations
+- compliance reporting deadline and penalty
+- audit findings and severity
+- urgent legal review requested documents
+- unsupported customer-list question that triggers the guardrail
+
+This is useful for manual validation of the retrieval-answer pipeline.
+
+## PII redaction testing
+
+The project intentionally includes a fictional email and phone number in the HTML FAQ sample.
+
+Source file:
+
+- `scripts/generate_sample_documents.py`
+- `documents/NYAYA_Legal_FAQ.html`
+
+Direct redaction test:
+
+```bash
+python -c "from pii import redact_text; text='Fictional email: asha.verma@example.invalid | phone: +91 00000 12345'; print(redact_text(text))"
+```
+
+Expected output contains:
+
+- `[REDACTED_EMAIL]`
+- `[REDACTED_PHONE]`
+
+Document-level check:
+
+```bash
+python -c "from loaders import load_documents; docs = load_documents('documents'); faq = next(d for d in docs if d['filename']=='NYAYA_Legal_FAQ.html'); print('EMAIL_PRESENT=', 'asha.verma@example.invalid' in faq['content']); print('EMAIL_REDACTED=', '[REDACTED_EMAIL]' in faq['content']); print('PHONE_REDACTED=', '[REDACTED_PHONE]' in faq['content'])"
+```
+
+## Retrieval strategy testing
+
+A retrieval strategy test file is included under `tests/`.
+
+Run:
+
+```bash
+python -m pytest tests/test_retrieval_strategies.py -q -s
+```
+
+This shows:
+
+- semantic retrieval with different `top_k` values
+- threshold-based filtering comparison
+- multiple representative legal/compliance questions
+
+This helps compare the behavior of retrieval at different sizes and score cutoffs.
 
 ## Guardrails and safety behavior
 
-The system includes guardrails for unsupported or out-of-scope requests. The flow is implemented in `agent.py` and `context.py`.
+The guardrail logic resides in `context.py` and is enforced in `agent.py`.
 
-Examples of behavior:
+Examples of blocked questions include:
 
-- out-of-scope requests are refused
-- questions are answered only using the fictional sample dataset
-- personal contact information is redacted before indexing or summarization
+- real customer list queries
+- unrelated business questions not grounded in the sample dataset
+- requests for real legal advice
+- unsupported requests that are not covered by the fictional legal/compliance corpus
 
-## Running tests
+Guardrail response example:
 
-Run the test suite from the project root:
+```text
+I can only answer questions grounded in the fictional Nyaya sample documents and I cannot support that request.
+```
+
+## Testing coverage
+
+The test suite covers the main project guarantees:
+
+- document loading and ingestion (`tests/test_loaders.py`)
+- chunking logic (`tests/test_chunking.py`)
+- retrieval behavior (`tests/test_retrieval.py`, `tests/test_retrieval_strategies.py`)
+- PII redaction (`tests/test_pii.py`)
+- guardrail logic (`tests/test_guardrail.py`)
+- API health and ask behavior (`tests/test_api.py`)
+- context and prompt assembly (`tests/test_context.py`)
+
+Run all tests:
 
 ```bash
 pytest -q
 ```
 
-The tests cover:
-
-- ingestion and document loading
-- chunking logic
-- redaction and PII filtering
-- retrieval behavior
-- guardrail handling
-- API health and ask behavior
-
-## Local-first design notes
-
-This project is intentionally deterministic and local-first:
-
-- it runs without requiring a production cloud service
-- it uses local ChromaDB storage
-- it keeps sample content fictional and safe for training/demo use
-- it has a default `mock` LLM mode for running without credentials
-
-## Troubleshooting
-
-### `documents/` folder is missing
-
-Run:
+Or focus on retrieval testing:
 
 ```bash
-python scripts/generate_sample_documents.py
+python -m pytest tests/test_retrieval_strategies.py -q -s
 ```
 
-### Chroma database is empty or stale
+## Practical execution order
 
-Rebuild the vector store:
-
-```bash
-python build_vectorstore.py
-```
-
-### API fails because of missing environment values
-
-Check the `.env` file and confirm `LLM_MODE` and any required variables are configured correctly.
-
-### `uvicorn` command not recognized
-
-Ensure the virtual environment is activated and dependencies are installed:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Typical execution flow
-
-A typical sequence for running the project is:
+A typical full run goes like this:
 
 ```bash
 python -m venv .venv
@@ -268,14 +415,53 @@ source .venv/bin/activate   # or .\.venv\Scripts\Activate.ps1 on Windows
 pip install -r requirements.txt
 python scripts/generate_sample_documents.py
 python build_vectorstore.py
-uvicorn app:app --reload
+python -m uvicorn app:app --reload
 ```
 
-Then send requests to:
+Then verify directly:
 
 - `GET /health`
 - `POST /ask`
+- `python agent.py`
+- `python -m pytest tests/test_retrieval_strategies.py -q -s`
+
+## Troubleshooting
+
+### Missing sample documents
+
+```bash
+python scripts/generate_sample_documents.py
+```
+
+### Empty or stale Chroma index
+
+```bash
+python build_vectorstore.py
+```
+
+### Wrong chunking strategy used
+
+Check `settings.py` and pass the strategy explicitly:
+
+```bash
+python build_vectorstore.py --strategy fixed
+```
+
+### API not starting
+
+Ensure the environment is activated and dependencies are installed:
+
+```bash
+pip install -r requirements.txt
+```
+
+### LLM config issues
+
+Check `.env` and verify one of these is configured:
+
+- `LLM_MODE=mock`
+- or `LLM_MODE=openai_compatible` with valid OpenAI values
 
 ## Summary
 
-Nyaya is a sample legal/compliance RAG application for local experimentation, document retrieval, and safe answer generation on fictional sources. It is structured to be easy to inspect, extend, and test while keeping the behavior deterministic and privacy-aware.
+Nyaya is a fictional legal/compliance RAG project that demonstrates a complete local-first workflow: document ingestion, PII wiping, chunking, embedding, semantic retrieval, guardrails, and API-based answer generation. It is designed for clear experimentation, easy debugging, and assignment-friendly testing across retrieval, chunking, and safety scenarios.

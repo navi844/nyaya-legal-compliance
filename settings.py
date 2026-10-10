@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     chroma_base_dir: str = Field(default='./chroma_db', alias='CHROMA_BASE_DIR')
     chunking_strategy: str = Field(default='heading_aware', alias='CHUNKING_STRATEGY')
     embedding_model: str = Field(default='all-MiniLM-L6-v2', alias='EMBEDDING_MODEL')
+    openai_api_key: str | None = Field(default=None, alias='OPENAI_API_KEY')
+    openai_model: str = Field(default='gpt-4o-mini', alias='OPENAI_MODEL')
+    openai_embedding_model: str = Field(default='text-embedding-3-small', alias='OPENAI_EMBEDDING_MODEL')
     llm_mode: str = Field(default='mock', alias='LLM_MODE')
     llm_base_url: str | None = Field(default=None, alias='LLM_BASE_URL')
     llm_api_key: str | None = Field(default=None, alias='LLM_API_KEY')
@@ -28,15 +31,31 @@ class Settings(BaseSettings):
     def chroma_dir(self) -> Path:
         return Path(self.chroma_base_dir).resolve()
 
+    @property
+    def effective_llm_api_key(self) -> str | None:
+        return self.llm_api_key or self.openai_api_key
+
+    @property
+    def effective_llm_model(self) -> str | None:
+        return self.llm_model or self.openai_model
+
+    @property
+    def effective_embedding_model(self) -> str:
+        if self.embedding_model and self.embedding_model != 'all-MiniLM-L6-v2':
+            return self.embedding_model
+        if self.openai_embedding_model:
+            return self.openai_embedding_model
+        return self.embedding_model
+
     def validate_llm_configuration(self) -> None:
         if self.llm_mode == 'mock':
             return
         if self.llm_mode != 'openai_compatible':
             raise ValueError(f'Unsupported LLM_MODE: {self.llm_mode}. Use mock or openai_compatible.')
         required = {
-            'LLM_BASE_URL': self.llm_base_url,
-            'LLM_API_KEY': self.llm_api_key,
-            'LLM_MODEL': self.llm_model,
+            'LLM_BASE_URL or OPENAI_BASE_URL': self.llm_base_url or 'https://api.openai.com/v1',
+            'LLM_API_KEY or OPENAI_API_KEY': self.effective_llm_api_key,
+            'LLM_MODEL or OPENAI_MODEL': self.effective_llm_model,
         }
         missing = [name for name, value in required.items() if not value]
         if missing:

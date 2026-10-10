@@ -13,6 +13,40 @@ from settings import settings
 from vectorstore import get_client, persist_chunks
 
 
+PRESET_TESTS = [
+    {
+        'name': 'grounded_msa_liability',
+        'question': 'What is the liability cap in the MSA?',
+        'strategy': 'heading_aware',
+    },
+    {
+        'name': 'grounded_msa_indemnification',
+        'question': 'What does the supplier indemnify the customer for under the MSA?',
+        'strategy': 'heading_aware',
+    },
+    {
+        'name': 'grounded_compliance_report',
+        'question': 'When is the quarterly compliance report due and what is the penalty?',
+        'strategy': 'heading_aware',
+    },
+    {
+        'name': 'grounded_audit_findings',
+        'question': 'List the open audit findings and their severity.',
+        'strategy': 'heading_aware',
+    },
+    {
+        'name': 'grounded_urgent_review',
+        'question': 'What must be included in an urgent legal review request?',
+        'strategy': 'heading_aware',
+    },
+    {
+        'name': 'guardrail_idontknow',
+        'question': 'I do not know the answer. Can you tell me the customer list?',
+        'strategy': 'heading_aware',
+    },
+]
+
+
 @dataclass
 class AgentAnswer:
     answer: str
@@ -62,3 +96,20 @@ class NyayaAgent:
         for doc, meta, dist in zip(query['documents'][0], query['metadatas'][0], query['distances'][0]):
             results.append({'document': doc, 'metadata': meta, 'distance': dist})
         return results
+
+
+def run_predefined_tests() -> None:
+    agent = NyayaAgent(documents_dir='documents')
+    print('Running predefined Nyaya test scenarios...\n')
+
+    for test in PRESET_TESTS:
+        print(f"=== {test['name']} ===")
+        print(f"Question: {test['question']}")
+        result = agent.answer_question(test['question'], strategy=test['strategy'])
+        print(f"Guardrail: {result.metadata.get('guardrail')}")
+        print(f"Sources: {result.sources}")
+        print(f"Answer: {result.answer}\n")
+
+
+if __name__ == '__main__':
+    run_predefined_tests()

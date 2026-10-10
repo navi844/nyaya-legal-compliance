@@ -18,13 +18,17 @@ class LLMClient:
     def generate(self, question: str, context: str) -> str:
         if self.mode == 'mock':
             return mock_answer(question, context)
-        prompt = grounded_answer_prompt(question, context)
-        if not settings.llm_base_url or not settings.llm_model or not settings.llm_api_key:
+
+        base_url = settings.llm_base_url or 'https://api.openai.com/v1'
+        api_key = settings.effective_llm_api_key
+        model = settings.effective_llm_model
+        if not api_key or not model:
             raise ValueError('LLM_MODE is openai_compatible but configuration is missing.')
-        headers = {'Authorization': f'Bearer {settings.llm_api_key}', 'Content-Type': 'application/json'}
-        payload = {'model': settings.llm_model, 'messages': [{'role': 'user', 'content': prompt}]}
+
+        headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
+        payload = {'model': model, 'messages': [{'role': 'user', 'content': grounded_answer_prompt(question, context)}]}
         response = httpx.post(
-            f'{settings.llm_base_url}/chat/completions',
+            f'{base_url}/chat/completions',
             headers=headers,
             json=payload,
             timeout=30,
